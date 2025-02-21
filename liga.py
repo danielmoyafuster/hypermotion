@@ -7,21 +7,44 @@ import os
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
 def pagina_jugadores(equipo):
-    st.title(f"👕 Jugadores de {equipo}")
+    # st.title(f"👕 Jugadores de {equipo}")
 
     conn = sqlite3.connect("liga_hypermotion.db")
     cursor = conn.cursor()
 
-    cursor.execute(
-        """SELECT NUMERO, NOMBRE, EN_COLECCION 
-        FROM JUGADORES 
-        WHERE ID_EQUIPO = (SELECT ID_EQUIPO FROM EQUIPOS WHERE NOMBRE = ?) 
-        ORDER BY NUMERO""",
-        (equipo,)
-    )
+    # Obtener la URL del escudo del equipo
+    cursor.execute("SELECT URL_ESCUDO FROM EQUIPOS WHERE NOMBRE = ?", (equipo,))
+    url_escudo = cursor.fetchone()
+
+    if url_escudo and url_escudo[0]:  
+        st.markdown(
+            f"<p style='text-align: center; font-size:24px; font-weight:bold;'>{equipo} - <img src='{url_escudo[0]}' width='150'></p>",
+            unsafe_allow_html=True
+        )  # Mostrar escudo centrado
+
+    # Agregar opción para seleccionar entre ver todos o solo los que faltan
+    ver_todos = st.radio("Mostrar:", ["Todos", "Solo los que faltan"], index=0)
+    mostrar_todos = True if ver_todos == "Todos" else False
+
+    # Línea separadora antes de mostrar el listado de jugadores
+    st.markdown("---")
+
+    # Construir la consulta SQL dinámicamente
+    consulta = """SELECT NUMERO, NOMBRE, EN_COLECCION 
+    FROM JUGADORES 
+    WHERE ID_EQUIPO = (SELECT ID_EQUIPO FROM EQUIPOS WHERE NOMBRE = ?)"""
+
+    # Filtrar jugadores según la selección del usuario
+    if not mostrar_todos:
+        consulta += " AND EN_COLECCION = 0"
+
+    consulta += " ORDER BY NUMERO"
+
+    cursor.execute(consulta, (equipo,))
     jugadores = cursor.fetchall()
     conn.close()
 
+    # Mostrar los jugadores en dos columnas
     col1, col2 = st.columns(2)
 
     for idx, (numero, nombre, en_coleccion) in enumerate(jugadores):
@@ -42,6 +65,7 @@ def pagina_jugadores(equipo):
 
 # Función para obtener el porcentaje de jugadores en la colección
 def obtener_porcentaje_completado():
+
     conn = sqlite3.connect("liga_hypermotion.db")
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM JUGADORES WHERE EN_COLECCION = 1")
@@ -50,11 +74,30 @@ def obtener_porcentaje_completado():
     cursor.execute("SELECT COUNT(*) FROM JUGADORES")
     total_jugadores = cursor.fetchone()[0]
     
+
     conn.close()
 
     if total_jugadores == 0:
         return 0  # Evitar división por cero
     return round((jugadores_en_coleccion / total_jugadores) * 100, 2)
+
+
+def estampas_que_faltan():
+    conn = sqlite3.connect("liga_hypermotion.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM JUGADORES WHERE EN_COLECCION = 0")
+    jugadores_faltan = cursor.fetchone()[0]   
+    conn.close()
+    return jugadores_faltan
+
+def estampas_totales():    
+    conn = sqlite3.connect("liga_hypermotion.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM JUGADORES")
+    jugadores_total = cursor.fetchone()[0]
+    conn.close()
+
+    return jugadores_total
 
 # Función para obtener los equipos con escudo válido ordenados por ID_EQUIPO
 def obtener_equipos():
@@ -68,9 +111,43 @@ def obtener_equipos():
 # Página principal con porcentaje de completado y el logo de especiales al final
 def pagina_principal():
     porcentaje_completado = obtener_porcentaje_completado()
+    faltan = estampas_que_faltan()
+    totales = estampas_totales()
+    en_album = totales - faltan
+
+    st.title("       Liga Hypermotion 2024/25")
+
+        # Línea separadora antes de mostrar el listado de jugadores
+    st.markdown("---")
+    # -------------------------------------------------------------------
+    # Organizar en cuatro columnas
+    col1, col2, col3, col4 = st.columns(4)
+
+    # Estilo para centrar texto
+    style = "text-align: center; font-size: 24px; font-weight: bold;"
+
+    # Mostrar los valores en columnas
+    with col1:
+        st.markdown(f"<p style='{style}'>{totales}</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'>TOTAL DE ESTAMPAS</p>", unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"<p style='{style}'>{en_album}</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'>EN ÁLBUM</p>", unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"<p style='{style}'>{faltan}</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'>FALTAN</p>", unsafe_allow_html=True)
+
+    with col4:
+        st.markdown(f"<p style='{style}'>{porcentaje_completado}%</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'>PORCENTAJE COMPLETADO</p>", unsafe_allow_html=True)
+      # Línea separadora antes de mostrar el listado de jugadores
+    st.markdown("---")
     
-    st.title("Liga Hypermotion 2024/25")
-    st.write(f"**{porcentaje_completado}% Completado - Selecciona un equipo para ver su lista de jugadores**")
+    
+    # --------------------------------------------------------------------
+    st.write(f"**Selecciona un equipo para ver su lista de jugadores**")
 
     # Obtener los equipos ordenados por ID_EQUIPO
     equipos = obtener_equipos()
@@ -108,6 +185,9 @@ def pagina_especiales():
     # Selector para mostrar todas las estampas o solo las que faltan
     mostrar_todos = st.radio("Mostrar:", ["Todos", "Solo los que faltan"], index=0)
     mostrar_todos = True if mostrar_todos == "Todos" else False
+    
+    # Línea separadora antes de mostrar el listado de jugadores
+    st.markdown("---")
 
     conn = sqlite3.connect("liga_hypermotion.db")
     cursor = conn.cursor()
