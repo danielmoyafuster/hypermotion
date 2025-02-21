@@ -6,6 +6,40 @@ import os
 # Ruta del logo de especiales
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
+def pagina_jugadores(equipo):
+    st.title(f"👕 Jugadores de {equipo}")
+
+    conn = sqlite3.connect("liga_hypermotion.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """SELECT NUMERO, NOMBRE, EN_COLECCION 
+        FROM JUGADORES 
+        WHERE ID_EQUIPO = (SELECT ID_EQUIPO FROM EQUIPOS WHERE NOMBRE = ?) 
+        ORDER BY NUMERO""",
+        (equipo,)
+    )
+    jugadores = cursor.fetchall()
+    conn.close()
+
+    col1, col2 = st.columns(2)
+
+    for idx, (numero, nombre, en_coleccion) in enumerate(jugadores):
+        checkbox_label = f"{numero} - {nombre}"
+
+        if idx % 2 == 0:
+            with col1:
+                tiene = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"{equipo}_{numero}")
+        else:
+            with col2:
+                tiene = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"{equipo}_{numero}")
+
+    if st.button("🔙 Volver a equipos"):
+        del st.session_state["equipo_seleccionado"]
+        st.rerun()
+
+
+
 # Función para obtener el porcentaje de jugadores en la colección
 def obtener_porcentaje_completado():
     conn = sqlite3.connect("liga_hypermotion.db")
