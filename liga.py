@@ -38,7 +38,7 @@ def pagina_jugadores(equipo):
     if not mostrar_todos:
         consulta += " AND EN_COLECCION = 0"
 
-    consulta += " ORDER BY NUMERO"
+    consulta += " ORDER BY NUM"
 
     cursor.execute(consulta, (equipo,))
     jugadores = cursor.fetchall()
@@ -115,9 +115,17 @@ def pagina_principal():
     totales = estampas_totales()
     en_album = totales - faltan
 
-    st.title("       Liga Hypermotion 2024/25")
 
-        # Línea separadora antes de mostrar el listado de jugadores
+    # URL del logo de LaLiga Hypermotion
+    logo_url = "https://assets.laliga.com/assets/logos/LALIGA_HYPERMOTION_RGB_h_color/LALIGA_HYPERMOTION_RGB_h_color.png"
+
+    # Mostrar la imagen en Streamlit con el nuevo parámetro
+    st.image(logo_url, caption="LALIGA HYPERMOTION", use_container_width=True)
+
+
+#    st.title("       Liga Hypermotion 2024/25")
+
+    # Línea separadora antes de mostrar el listado de jugadores
     st.markdown("---")
     # -------------------------------------------------------------------
     # Organizar en cuatro columnas
