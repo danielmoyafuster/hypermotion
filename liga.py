@@ -7,7 +7,7 @@ import os
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
 def pagina_jugadores(equipo):
-    # st.title(f"👕 Jugadores de {equipo}")
+    st.title(f"👕 Jugadores de {equipo}")
 
     conn = sqlite3.connect("liga_hypermotion.db")
     cursor = conn.cursor()
@@ -20,13 +20,13 @@ def pagina_jugadores(equipo):
         st.markdown(
             f"<p style='text-align: center; font-size:24px; font-weight:bold;'>{equipo} - <img src='{url_escudo[0]}' width='150'></p>",
             unsafe_allow_html=True
-        )  # Mostrar escudo centrado
+        )  
 
     # Agregar opción para seleccionar entre ver todos o solo los que faltan
     ver_todos = st.radio("Mostrar:", ["Todos", "Solo los que faltan"], index=0)
     mostrar_todos = True if ver_todos == "Todos" else False
 
-    # Línea separadora antes de mostrar el listado de jugadores
+    # Línea separadora
     st.markdown("---")
 
     # Construir la consulta SQL dinámicamente
@@ -34,7 +34,6 @@ def pagina_jugadores(equipo):
     FROM JUGADORES 
     WHERE ID_EQUIPO = (SELECT ID_EQUIPO FROM EQUIPOS WHERE NOMBRE = ?)"""
 
-    # Filtrar jugadores según la selección del usuario
     if not mostrar_todos:
         consulta += " AND EN_COLECCION = 0"
 
@@ -42,21 +41,33 @@ def pagina_jugadores(equipo):
 
     cursor.execute(consulta, (equipo,))
     jugadores = cursor.fetchall()
-    conn.close()
 
     # Mostrar los jugadores en dos columnas
     col1, col2 = st.columns(2)
+
+    # Conectar para actualizar en la base de datos
+    conn_update = sqlite3.connect("liga_hypermotion.db")
+    cursor_update = conn_update.cursor()
 
     for idx, (numero, nombre, en_coleccion) in enumerate(jugadores):
         checkbox_label = f"{numero} - {nombre}"
 
         if idx % 2 == 0:
             with col1:
-                tiene = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"{equipo}_{numero}")
+                nuevo_estado = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"{equipo}_{numero}")
         else:
             with col2:
-                tiene = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"{equipo}_{numero}")
+                nuevo_estado = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"{equipo}_{numero}")
 
+        # Si el estado cambió, actualizar en la base de datos
+        if nuevo_estado != bool(en_coleccion):
+            cursor_update.execute("UPDATE JUGADORES SET EN_COLECCION = ? WHERE NUMERO = ?", (int(nuevo_estado), numero))
+    
+    # Guardar cambios en la base de datos
+    conn_update.commit()
+    conn_update.close()
+
+    # Botón para volver a la pantalla principal
     if st.button("🔙 Volver a equipos"):
         del st.session_state["equipo_seleccionado"]
         st.rerun()
@@ -74,7 +85,6 @@ def obtener_porcentaje_completado():
     cursor.execute("SELECT COUNT(*) FROM JUGADORES")
     total_jugadores = cursor.fetchone()[0]
     
-
     conn.close()
 
     if total_jugadores == 0:
@@ -86,7 +96,7 @@ def estampas_que_faltan():
     conn = sqlite3.connect("liga_hypermotion.db")
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM JUGADORES WHERE EN_COLECCION = 0")
-    jugadores_faltan = cursor.fetchone()[0]   
+    jugadores_faltan = cursor.fetchone()[0]  
     conn.close()
     return jugadores_faltan
 
