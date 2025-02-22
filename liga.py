@@ -184,7 +184,7 @@ def pagina_principal():
 
     # Añadir el logo de especiales al final, alineado con el tamaño de los escudos
     st.markdown("---")
-    st.subheader("⚡ Estampas Especiales")
+    # st.subheader("⚡ Estampas Especiales")
 
     col_especial = cols[len(equipos) % 4]  # Asegurar alineación con la cuadrícula de equipos
 
