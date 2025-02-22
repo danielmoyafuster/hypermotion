@@ -24,8 +24,12 @@ def actualizar_estampa(numero, nuevo_estado):
     conn.commit()
     conn.close()
 
-
-
+def faltan():
+    conn = sqlite3.connect("liga_hypermotion.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM JUGADORES WHERE EN_COLECCION = 0")
+    faltantes = cursor.fetchone()[0]
+    return faltantes
   
 
 # Título de la app
@@ -35,7 +39,19 @@ logo_url = "https://assets.laliga.com/assets/logos/LALIGA_HYPERMOTION_RGB_h_colo
 # Mostrar la imagen en Streamlit con el nuevo parámetro
 st.image(logo_url, caption="LALIGA HYPERMOTION", use_container_width=True)
 
-st.title("📋 Listado de Estampas Faltantes")
+estampas_que_faltan = faltan()
+# Línea separadora antes de mostrar el listado de jugadores
+st.markdown("---")
+
+# Estilo para centrar texto
+style = "text-align: center; font-size: 24px; font-weight: bold;"
+
+# Mostrar los valores en columnas
+st.markdown(f"<p style='{style}'>Faltan {estampas_que_faltan} estampas</p>", unsafe_allow_html=True)
+
+# st.title(f"Faltan {estampas_que_faltan} estampas")
+# Línea separadora antes de mostrar el listado de jugadores
+st.markdown("---")
 
 # Obtener los datos de la base de datos
 faltantes_df = obtener_estampas_faltantes()
