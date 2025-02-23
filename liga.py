@@ -11,7 +11,7 @@ LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el
 def detectar_dispositivo():
     """Detecta si el usuario está en un móvil o en un ordenador basándose en el ancho de pantalla."""
     if hasattr(st, "browser_info") and st.browser_info is not None:
-        return st.browser_info.width < 800  # Si el ancho es menor a 800px, es móvil
+        return st.browser_info["width"] < 800  # Si el ancho es menor a 800px, es móvil
     return False  # Por defecto, asumimos que es PC
 
 # Guardar si es móvil en la sesión
