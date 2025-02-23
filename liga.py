@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import os
 # Capturar ancho de la ventana en cada actualización
-st.session_state["window_width"] = st.get_option("browser.gatherUsageStats") and st.experimental_get_query_params().get("width", [1024])[0]
+st.session_state["window_width"] = st.get_option("browser.gatherUsageStats") and st.query_params().get("width", [1024])[0]
 
 # Ruta del logo de especiales
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
