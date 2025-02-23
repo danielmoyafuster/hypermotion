@@ -7,37 +7,6 @@ LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el
 
 
 
-
-
-# 📌 Capturar el User-Agent con JavaScript y enviarlo a Streamlit
-st.markdown("""
-<script>
-    function sendUserAgent() {
-        var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        window.parent.postMessage({"user_agent": userAgent}, "*");
-    }
-    window.onload = sendUserAgent;
-</script>
-""", unsafe_allow_html=True)
-
-def detectar_dispositivo():
-    """Detecta si el usuario está en un móvil basándose en el User-Agent y el ancho de pantalla."""
-    if "user_agent" in st.session_state:
-        user_agent = st.session_state["user_agent"]
-        if any(x in user_agent for x in ["iPhone", "Android", "Mobile"]):
-            return True  # ✅ Si el User-Agent contiene "iPhone" o "Android", es un móvil
-
-    # 🔹 Si no se puede detectar el User-Agent, usamos el ancho de pantalla
-    if "window_width" in st.session_state:
-        return st.session_state["window_width"] < 800
-
-    return False  # Por defecto, asumimos que es PC
-
-# 📌 Guardar si es móvil en session_state
-if "is_mobile" not in st.session_state:
-    st.session_state["is_mobile"] = detectar_dispositivo()
-
-
 def pagina_jugadores(equipo):
     st.title(f"👕 Jugadores de {equipo}")
 
@@ -140,27 +109,29 @@ def obtener_equipos():
 
 # 📌 Mostrar escudos correctamente en móvil y PC
 def mostrar_equipos():
-    equipos = obtener_equipos()
-    
+    equipos = obtener_equipos()  # Obtener equipos ordenados por ID_EQUIPO
+
     if not st.session_state["is_mobile"]:
         # ✅ En PC → 4 columnas fijas, siempre manteniendo filas
         num_columnas = 4
     else:
-        # ✅ En móviles → 2 columnas fijas para respetar el orden
+        # ✅ En móviles → 2 columnas, respetando el orden de ID_EQUIPO
         num_columnas = 2
 
-    # Crear las columnas dinámicamente
-    columnas = st.columns(num_columnas)
+    # 🔹 Crear filas dinámicamente en función del número de columnas
+    filas = [equipos[i:i+num_columnas] for i in range(0, len(equipos), num_columnas)]  
 
-    for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
-        col_idx = idx % num_columnas  # Asegurar que los equipos se ordenen en filas
-        with columnas[col_idx]:
-            if url_escudo:
-                st.image(url_escudo, caption=nombre, use_container_width=True)
-            if st.button(f"🔍 Ver {nombre}", key=nombre):
-                st.session_state["equipo_seleccionado"] = nombre
-                st.session_state["mostrar_todos"] = True
-                st.rerun()
+    # 🔹 Mostrar los equipos en filas (respetando el orden de ID_EQUIPO)
+    for fila in filas:
+        columnas = st.columns(num_columnas)
+        for idx, (id_equipo, nombre, url_escudo) in enumerate(fila):
+            with columnas[idx]:  # Mantener orden por filas
+                if url_escudo:
+                    st.image(url_escudo, caption=nombre, use_container_width=True)
+                if st.button(f"🔍 Ver {nombre}", key=nombre):
+                    st.session_state["equipo_seleccionado"] = nombre
+                    st.session_state["mostrar_todos"] = True
+                    st.rerun()
 
 # Llamar a la función en la página principal
 # mostrar_equipos()
