@@ -138,31 +138,24 @@ def mostrar_equipos():
     equipos = obtener_equipos()
     
     if not st.session_state["is_mobile"]:
-        # ✅ En PC → 4 columnas con el orden correcto
-        cols = st.columns(4)
-        for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
-            with cols[idx % 4]:  # Mantener el orden de izquierda a derecha
-                if url_escudo:
-                    st.image(url_escudo, caption=nombre, use_container_width=True)
-                if st.button(f"🔍 Ver {nombre}", key=nombre):
-                    st.session_state["equipo_seleccionado"] = nombre
-                    st.session_state["mostrar_todos"] = True
-                    st.rerun()
+        # ✅ En PC → 4 columnas fijas, siempre manteniendo filas
+        num_columnas = 4
     else:
-        # ✅ En móviles → 2 columnas, respetando el orden de ID_EQUIPO
-        filas = [equipos[i:i+2] for i in range(0, len(equipos), 2)]  # Agrupar en pares
+        # ✅ En móviles → 2 columnas fijas para respetar el orden
+        num_columnas = 2
 
-        for fila in filas:
-            col1, col2 = st.columns(2)
-            for idx, (id_equipo, nombre, url_escudo) in enumerate(fila):
-                with (col1 if idx == 0 else col2):
-                    if url_escudo:
-                        st.image(url_escudo, caption=nombre, use_container_width=True)
-                    if st.button(f"🔍 Ver {nombre}", key=nombre):
-                        st.session_state["equipo_seleccionado"] = nombre
-                        st.session_state["mostrar_todos"] = True
-                        st.rerun()
+    # Crear las columnas dinámicamente
+    columnas = st.columns(num_columnas)
 
+    for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
+        col_idx = idx % num_columnas  # Asegurar que los equipos se ordenen en filas
+        with columnas[col_idx]:
+            if url_escudo:
+                st.image(url_escudo, caption=nombre, use_container_width=True)
+            if st.button(f"🔍 Ver {nombre}", key=nombre):
+                st.session_state["equipo_seleccionado"] = nombre
+                st.session_state["mostrar_todos"] = True
+                st.rerun()
 
 # Llamar a la función en la página principal
 # mostrar_equipos()
