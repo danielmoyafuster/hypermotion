@@ -7,28 +7,20 @@ LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el
 
 
 
+import streamlit as st
+
 def detectar_dispositivo():
-    """Detecta si el usuario está en un móvil o en un ordenador basándose en el ancho de pantalla."""
+    """Detecta si el usuario está en un móvil usando el User-Agent y el ancho de pantalla."""
+    user_agent = st.experimental_user_agent  # Obtener el User-Agent del navegador
+    if user_agent and ("iPhone" in user_agent or "Android" in user_agent or "Mobile" in user_agent):
+        return True  # Si el User-Agent contiene "iPhone" o "Android", es móvil
+    
     if "window_width" in st.session_state:
         return st.session_state["window_width"] < 800  # Si el ancho es menor a 800px, es móvil
-    return False  # Si no se puede detectar, asumimos que es PC
+    
+    return False  # Por defecto, asumimos que es PC
 
-# Capturar el ancho de la ventana con JavaScript y guardarlo en session_state
-st.markdown("""
-<script>
-function sendWidth() {
-    var width = window.innerWidth;
-    window.parent.postMessage({"window_width": width}, "*");
-}
-window.onload = sendWidth;
-window.onresize = sendWidth;
-</script>
-""", unsafe_allow_html=True)
-
-# Inicializar el estado si no existe
-if "window_width" not in st.session_state:
-    st.session_state["window_width"] = 1024  # Valor por defecto si no hay datos
-
+# Guardar el estado en session_state
 if "is_mobile" not in st.session_state:
     st.session_state["is_mobile"] = detectar_dispositivo()
 
