@@ -8,11 +8,15 @@ st.session_state["window_width"] = st.get_option("browser.gatherUsageStats") and
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
 
+
 def detectar_dispositivo():
     """Detecta si el usuario está en un móvil o en un ordenador basándose en el ancho de pantalla."""
-    return st.browser_info and st.browser_info.width < 800  # Si el ancho es menor a 800px, es móvil
+    try:
+        return st.browser_info.width < 800  # Si el ancho es menor a 800px, es móvil
+    except AttributeError:
+        return False  # Si no se puede detectar, asumir que es PC
 
-# Inicializar detección
+# Guardar si es móvil en la sesión
 if "is_mobile" not in st.session_state:
     st.session_state["is_mobile"] = detectar_dispositivo()
 
