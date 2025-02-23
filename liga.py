@@ -8,15 +8,11 @@ st.session_state["window_width"] = st.get_option("browser.gatherUsageStats") and
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
 
-import streamlit as st
-
 def detectar_dispositivo():
     """Detecta si el usuario está en un móvil o en un ordenador basándose en el ancho de pantalla."""
-    if "window_width" in st.session_state:
-        return st.session_state["window_width"] < 800  # Si el ancho es menor a 800px, es móvil
-    return False  # Por defecto, PC
+    return st.browser_info and st.browser_info.width < 800  # Si el ancho es menor a 800px, es móvil
 
-# Inicializar detección si no está en session_state
+# Inicializar detección
 if "is_mobile" not in st.session_state:
     st.session_state["is_mobile"] = detectar_dispositivo()
 
@@ -137,30 +133,20 @@ def mostrar_equipos():
                     st.session_state["mostrar_todos"] = True
                     st.rerun()
     else:
-        # ✅ En móviles → Organizar manualmente en filas de 2 equipos por fila
-        num_equipos = len(equipos)
-        for i in range(0, num_equipos, 2):
+        # ✅ En móviles → 2 columnas, orden correcto
+        filas = [equipos[i:i+2] for i in range(0, len(equipos), 2)]  # Agrupar en pares
+
+        for fila in filas:
             col1, col2 = st.columns(2)
-            
-            with col1:
-                if i < num_equipos:
-                    id_equipo, nombre, url_escudo = equipos[i]
+            for idx, (id_equipo, nombre, url_escudo) in enumerate(fila):
+                with (col1 if idx == 0 else col2):
                     if url_escudo:
                         st.image(url_escudo, caption=nombre, use_container_width=True)
                     if st.button(f"🔍 Ver {nombre}", key=nombre):
                         st.session_state["equipo_seleccionado"] = nombre
                         st.session_state["mostrar_todos"] = True
                         st.rerun()
-            
-            with col2:
-                if i + 1 < num_equipos:
-                    id_equipo, nombre, url_escudo = equipos[i + 1]
-                    if url_escudo:
-                        st.image(url_escudo, caption=nombre, use_container_width=True)
-                    if st.button(f"🔍 Ver {nombre}", key=nombre):
-                        st.session_state["equipo_seleccionado"] = nombre
-                        st.session_state["mostrar_todos"] = True
-                        st.rerun()
+
 
 
 # Llamar a la función en la página principal
