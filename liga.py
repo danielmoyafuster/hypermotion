@@ -8,18 +8,15 @@ st.session_state["window_width"] = st.get_option("browser.gatherUsageStats") and
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
 
-
 def detectar_dispositivo():
     """Detecta si el usuario está en un móvil o en un ordenador basándose en el ancho de pantalla."""
-    try:
+    if hasattr(st, "browser_info") and st.browser_info is not None:
         return st.browser_info.width < 800  # Si el ancho es menor a 800px, es móvil
-    except AttributeError:
-        return False  # Si no se puede detectar, asumir que es PC
+    return False  # Por defecto, asumimos que es PC
 
 # Guardar si es móvil en la sesión
 if "is_mobile" not in st.session_state:
     st.session_state["is_mobile"] = detectar_dispositivo()
-
 
 def pagina_jugadores(equipo):
     st.title(f"👕 Jugadores de {equipo}")
@@ -137,7 +134,7 @@ def mostrar_equipos():
                     st.session_state["mostrar_todos"] = True
                     st.rerun()
     else:
-        # ✅ En móviles → 2 columnas, orden correcto
+        # ✅ En móviles → 2 columnas, respetando el orden de ID_EQUIPO
         filas = [equipos[i:i+2] for i in range(0, len(equipos), 2)]  # Agrupar en pares
 
         for fila in filas:
