@@ -188,6 +188,7 @@ def pagina_principal():
     st.write(f"📱 **¿Es móvil?:** {st.session_state['is_mobile']}")
     st.write(f"🖥 **Ancho de ventana detectado:** {st.session_state.get('window_width', 'No detectado')}")
     st.write(f"📊 **Número de equipos detectados:** {len(obtener_equipos())}")
+    st.session_state["is_mobile"] = st.toggle("📱 Forzar modo móvil", value=st.session_state.get("is_mobile", False))
     mostrar_equipos()
 
 # 📌 Lógica de navegación
