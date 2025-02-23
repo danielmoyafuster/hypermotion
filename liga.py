@@ -5,15 +5,25 @@ import os
 # Ruta del logo de especiales
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
-# 📌 Detectar si el usuario está en móvil o PC
-def detectar_dispositivo():
-    """ Detecta si el usuario está en un móvil o en un ordenador """
-    user_agent = st.query_params.get("user_agent", "").lower()
-    return "mobile" in user_agent or "android" in user_agent or "iphone" in user_agent
 
+def detectar_dispositivo():
+    """ Detecta si el usuario está en un móvil o en un ordenador. """
+    try:
+        # Intentamos usar la detección de user agent en Streamlit
+        if hasattr(st, "user_agent"):
+            return st.user_agent.is_mobile
+    except AttributeError:
+        pass
+    
+    # Alternativa: Revisar ancho de pantalla (si es menor de 800px, lo tratamos como móvil)
+    return st.session_state.get("window_width", 1024) < 800
+
+# Guardar si es móvil en la sesión
 if "is_mobile" not in st.session_state:
     st.session_state["is_mobile"] = detectar_dispositivo()
 
+# Capturar ancho de pantalla en cada ejecución (para refinar la detección)
+st.session_state["window_width"] = st.experimental_get_query_params().get("width", [1024])[0]
 def pagina_jugadores(equipo):
     st.title(f"👕 Jugadores de {equipo}")
 
