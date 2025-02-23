@@ -1,29 +1,25 @@
 import streamlit as st
 import sqlite3
 import os
+# Capturar ancho de la ventana en cada actualización
+st.session_state["window_width"] = st.get_option("browser.gatherUsageStats") and st.experimental_get_query_params().get("width", [1024])[0]
 
 # Ruta del logo de especiales
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
 
-def detectar_dispositivo():
-    """ Detecta si el usuario está en un móvil o en un ordenador. """
-    try:
-        # Intentamos usar la detección de user agent en Streamlit
-        if hasattr(st, "user_agent"):
-            return st.user_agent.is_mobile
-    except AttributeError:
-        pass
-    
-    # Alternativa: Revisar ancho de pantalla (si es menor de 800px, lo tratamos como móvil)
-    return st.session_state.get("window_width", 1024) < 800
+import streamlit as st
 
-# Guardar si es móvil en la sesión
+def detectar_dispositivo():
+    """Detecta si el usuario está en un móvil o en un ordenador basándose en el ancho de pantalla."""
+    if "window_width" in st.session_state:
+        return st.session_state["window_width"] < 800  # Si el ancho es menor a 800px, es móvil
+    return False  # Por defecto, PC
+
+# Inicializar detección si no está en session_state
 if "is_mobile" not in st.session_state:
     st.session_state["is_mobile"] = detectar_dispositivo()
 
-# Capturar ancho de pantalla en cada ejecución (para refinar la detección)
-st.session_state["window_width"] = st.query_params().get("width", [1024])[0]
 
 def pagina_jugadores(equipo):
     st.title(f"👕 Jugadores de {equipo}")
