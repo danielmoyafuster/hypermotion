@@ -1,22 +1,37 @@
 import streamlit as st
 import sqlite3
 import os
-# Capturar ancho de la ventana en cada actualización
-st.session_state["window_width"] = st.get_option("browser.gatherUsageStats") and st.query_params().get("width", [1024])[0]
 
 # Ruta del logo de especiales
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
 
 
+
 def detectar_dispositivo():
     """Detecta si el usuario está en un móvil o en un ordenador basándose en el ancho de pantalla."""
-    if hasattr(st, "browser_info") and st.browser_info is not None:
-        return st.browser_info["width"] < 800  # Si el ancho es menor a 800px, es móvil
-    return False  # Por defecto, asumimos que es PC
+    if "window_width" in st.session_state:
+        return st.session_state["window_width"] < 800  # Si el ancho es menor a 800px, es móvil
+    return False  # Si no se puede detectar, asumimos que es PC
 
-# Guardar si es móvil en la sesión
+# Capturar el ancho de la ventana con JavaScript y guardarlo en session_state
+st.markdown("""
+<script>
+function sendWidth() {
+    var width = window.innerWidth;
+    window.parent.postMessage({"window_width": width}, "*");
+}
+window.onload = sendWidth;
+window.onresize = sendWidth;
+</script>
+""", unsafe_allow_html=True)
+
+# Inicializar el estado si no existe
+if "window_width" not in st.session_state:
+    st.session_state["window_width"] = 1024  # Valor por defecto si no hay datos
+
 if "is_mobile" not in st.session_state:
     st.session_state["is_mobile"] = detectar_dispositivo()
+
 
 def pagina_jugadores(equipo):
     st.title(f"👕 Jugadores de {equipo}")
@@ -147,7 +162,6 @@ def mostrar_equipos():
                         st.session_state["equipo_seleccionado"] = nombre
                         st.session_state["mostrar_todos"] = True
                         st.rerun()
-
 
 
 # Llamar a la función en la página principal
