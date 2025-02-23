@@ -122,8 +122,7 @@ def mostrar_equipos():
         # ✅ En PC → 4 columnas con el orden correcto
         cols = st.columns(4)
         for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
-            col_idx = idx % 4  # Mantener el orden de izquierda a derecha
-            with cols[col_idx]:
+            with cols[idx % 4]:  # Mantener el orden de izquierda a derecha
                 if url_escudo:
                     st.image(url_escudo, caption=nombre, use_container_width=True)
                 if st.button(f"🔍 Ver {nombre}", key=nombre):
@@ -131,11 +130,10 @@ def mostrar_equipos():
                     st.session_state["mostrar_todos"] = True
                     st.rerun()
     else:
-        # ✅ En móvil → 2 columnas en lugar de 1 para mantener la estructura
+        # ✅ En móviles → 2 columnas en lugar de 1 para mantener la estructura
         cols = st.columns(2)
         for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
-            col_idx = idx % 2  # Organizar en dos columnas en móviles
-            with cols[col_idx]:
+            with cols[idx % 2]:  # Organizar en dos columnas en móviles
                 if url_escudo:
                     st.image(url_escudo, caption=nombre, use_container_width=True)
                 if st.button(f"🔍 Ver {nombre}", key=nombre):
