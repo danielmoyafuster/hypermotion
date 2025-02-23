@@ -1,10 +1,18 @@
-
 import streamlit as st
 import sqlite3
 import os
 
 # Ruta del logo de especiales
 LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el directorio de la aplicación
+
+# 📌 Detectar si el usuario está en móvil o PC
+def detectar_dispositivo():
+    """ Detecta si el usuario está en un móvil o en un ordenador """
+    user_agent = st.query_params.get("user_agent", "").lower()
+    return "mobile" in user_agent or "android" in user_agent or "iphone" in user_agent
+
+if "is_mobile" not in st.session_state:
+    st.session_state["is_mobile"] = detectar_dispositivo()
 
 def pagina_jugadores(equipo):
     st.title(f"👕 Jugadores de {equipo}")
@@ -29,7 +37,7 @@ def pagina_jugadores(equipo):
     # Línea separadora
     st.markdown("---")
 
-    # Construir la consulta SQL dinámicamente
+    # Obtener jugadores del equipo
     consulta = """SELECT NUMERO, NOMBRE, EN_COLECCION 
     FROM JUGADORES 
     WHERE ID_EQUIPO = (SELECT ID_EQUIPO FROM EQUIPOS WHERE NOMBRE = ?)"""
@@ -45,7 +53,6 @@ def pagina_jugadores(equipo):
     # Mostrar los jugadores en dos columnas
     col1, col2 = st.columns(2)
 
-    # Conectar para actualizar en la base de datos
     conn_update = sqlite3.connect("liga_hypermotion.db")
     cursor_update = conn_update.cursor()
 
@@ -59,24 +66,18 @@ def pagina_jugadores(equipo):
             with col2:
                 nuevo_estado = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"{equipo}_{numero}")
 
-        # Si el estado cambió, actualizar en la base de datos
         if nuevo_estado != bool(en_coleccion):
             cursor_update.execute("UPDATE JUGADORES SET EN_COLECCION = ? WHERE NUMERO = ?", (int(nuevo_estado), numero))
     
-    # Guardar cambios en la base de datos
     conn_update.commit()
     conn_update.close()
 
-    # Botón para volver a la pantalla principal
     if st.button("🔙 Volver a equipos"):
         del st.session_state["equipo_seleccionado"]
         st.rerun()
 
-
-
-# Función para obtener el porcentaje de jugadores en la colección
+# 📌 Función para obtener datos generales
 def obtener_porcentaje_completado():
-
     conn = sqlite3.connect("liga_hypermotion.db")
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM JUGADORES WHERE EN_COLECCION = 1")
@@ -86,11 +87,7 @@ def obtener_porcentaje_completado():
     total_jugadores = cursor.fetchone()[0]
     
     conn.close()
-
-    if total_jugadores == 0:
-        return 0  # Evitar división por cero
-    return round((jugadores_en_coleccion / total_jugadores) * 100, 2)
-
+    return round((jugadores_en_coleccion / total_jugadores) * 100, 2) if total_jugadores > 0 else 0
 
 def estampas_que_faltan():
     conn = sqlite3.connect("liga_hypermotion.db")
@@ -106,10 +103,9 @@ def estampas_totales():
     cursor.execute("SELECT COUNT(*) FROM JUGADORES")
     jugadores_total = cursor.fetchone()[0]
     conn.close()
-
     return jugadores_total
 
-# Función para obtener los equipos con escudo válido ordenados por ID_EQUIPO
+# 📌 Función para obtener equipos con escudos ordenados por ID_EQUIPO
 def obtener_equipos():
     conn = sqlite3.connect("liga_hypermotion.db")
     cursor = conn.cursor()
@@ -118,136 +114,55 @@ def obtener_equipos():
     conn.close()
     return equipos
 
-# Página principal con porcentaje de completado y el logo de especiales al final
-def pagina_principal():
-    porcentaje_completado = obtener_porcentaje_completado()
-    faltan = estampas_que_faltan()
-    totales = estampas_totales()
-    en_album = totales - faltan
-
-
-    # URL del logo de LaLiga Hypermotion
-    logo_url = "https://assets.laliga.com/assets/logos/LALIGA_HYPERMOTION_RGB_h_color/LALIGA_HYPERMOTION_RGB_h_color.png"
-
-    # Mostrar la imagen en Streamlit con el nuevo parámetro
-    st.image(logo_url, caption="LALIGA HYPERMOTION", use_container_width=True)
-
-
-#    st.title("       Liga Hypermotion 2024/25")
-
-    # Línea separadora antes de mostrar el listado de jugadores
-    st.markdown("---")
-    # -------------------------------------------------------------------
-    # Organizar en cuatro columnas
-    col1, col2, col3, col4 = st.columns(4)
-
-    # Estilo para centrar texto
-    style = "text-align: center; font-size: 24px; font-weight: bold;"
-
-    # Mostrar los valores en columnas
-    with col1:
-        st.markdown(f"<p style='{style}'>{totales}</p>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'>TOTAL DE ESTAMPAS</p>", unsafe_allow_html=True)
-
-    with col2:
-        st.markdown(f"<p style='{style}'>{en_album}</p>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'>EN ÁLBUM</p>", unsafe_allow_html=True)
-
-    with col3:
-        st.markdown(f"<p style='{style}'>{faltan}</p>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'>FALTAN</p>", unsafe_allow_html=True)
-
-    with col4:
-        st.markdown(f"<p style='{style}'>{porcentaje_completado}%</p>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'>PORCENTAJE COMPLETADO</p>", unsafe_allow_html=True)
-      # Línea separadora antes de mostrar el listado de jugadores
-    st.markdown("---")
-    
-    
-    # --------------------------------------------------------------------
-    st.write(f"**Selecciona un equipo para ver su lista de jugadores**")
-
-    # Obtener los equipos ordenados por ID_EQUIPO
+# 📌 Mostrar escudos correctamente en móvil y PC
+def mostrar_equipos():
     equipos = obtener_equipos()
 
-    # Mostrar los escudos como botones clickeables
-    cols = st.columns(4)  # Número de columnas para organizar los escudos
-
-    for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
-        with cols[idx % 4]:  # Distribuir los escudos en columnas
+    if not st.session_state["is_mobile"]:
+        # ✅ En PC → 4 columnas
+        cols = st.columns(4)
+        for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
+            with cols[idx % 4]:
+                if url_escudo:
+                    st.image(url_escudo, caption=nombre, use_container_width=True)
+                if st.button(f"🔍 Ver {nombre}", key=nombre):
+                    st.session_state["equipo_seleccionado"] = nombre
+                    st.session_state["mostrar_todos"] = True
+                    st.rerun()
+    else:
+        # ✅ En móvil → 1 sola columna
+        for id_equipo, nombre, url_escudo in equipos:
             if url_escudo:
                 st.image(url_escudo, caption=nombre, use_container_width=True)
             if st.button(f"🔍 Ver {nombre}", key=nombre):
                 st.session_state["equipo_seleccionado"] = nombre
-                st.session_state["mostrar_todos"] = True  # Por defecto, mostrar todos los jugadores
-                st.rerun()  # Refrescar la página para mostrar la lista de jugadores
+                st.session_state["mostrar_todos"] = True
+                st.rerun()
 
-    # Añadir el logo de especiales al final, alineado con el tamaño de los escudos
-    st.markdown("---")
-    # st.subheader("⚡ Estampas Especiales")
-
-    col_especial = cols[len(equipos) % 4]  # Asegurar alineación con la cuadrícula de equipos
-
-    with col_especial:
-        if os.path.exists(LOGO_ESPECIALES):
-            st.image(LOGO_ESPECIALES, caption="Especiales", use_container_width=True)
-
-        if st.button("🔍 Ver Estampas Especiales"):
-            st.session_state["mostrar_especiales"] = True
-            st.rerun()
-
-# Página de estampas especiales con dos columnas y opción de filtro
-def pagina_especiales():
-    st.title("⚡ Estampas Especiales")
-
-    # Selector para mostrar todas las estampas o solo las que faltan
-    mostrar_todos = st.radio("Mostrar:", ["Todos", "Solo los que faltan"], index=0)
-    mostrar_todos = True if mostrar_todos == "Todos" else False
-    
-    # Línea separadora antes de mostrar el listado de jugadores
+# 📌 Página principal
+def pagina_principal():
+    st.image("https://assets.laliga.com/assets/logos/LALIGA_HYPERMOTION_RGB_h_color/LALIGA_HYPERMOTION_RGB_h_color.png", caption="LALIGA HYPERMOTION", use_container_width=True)
     st.markdown("---")
 
-    conn = sqlite3.connect("liga_hypermotion.db")
-    cursor = conn.cursor()
+    # Contadores
+    totales = estampas_totales()
+    faltan = estampas_que_faltan()
+    en_album = totales - faltan
+    porcentaje_completado = obtener_porcentaje_completado()
 
-    if mostrar_todos:
-        cursor.execute("SELECT NUMERO, NOMBRE, TIPO, EN_COLECCION FROM JUGADORES WHERE ESPECIALES = 1 ORDER BY NUMERO")
-    else:
-        cursor.execute("SELECT NUMERO, NOMBRE, TIPO, EN_COLECCION FROM JUGADORES WHERE ESPECIALES = 1 AND EN_COLECCION = 0 ORDER BY NUMERO")
+    col1, col2, col3, col4 = st.columns(4)
+    for col, valor, titulo in zip([col1, col2, col3, col4], [totales, en_album, faltan, f"{porcentaje_completado}%"], 
+                                  ["TOTAL DE ESTAMPAS", "EN ÁLBUM", "FALTAN", "PORCENTAJE COMPLETADO"]):
+        with col:
+            st.markdown(f"<p style='text-align: center; font-size: 24px; font-weight: bold;'>{valor}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='text-align: center;'>{titulo}</p>", unsafe_allow_html=True)
 
-    jugadores = cursor.fetchall()
-    conn.close()
+    st.markdown("---")
+    st.write("**Selecciona un equipo para ver su lista de jugadores**")
+    mostrar_equipos()
 
-    if not jugadores:
-        st.write("No hay estampas especiales registradas.")
-    else:
-        col1, col2 = st.columns(2)
-
-        for idx, (numero, nombre, tipo, en_coleccion) in enumerate(jugadores):
-            checkbox_label = f"{numero} - {nombre} - {tipo}"
-
-            if idx % 2 == 0:
-                with col1:
-                    tiene = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"especiales_{numero}")
-            else:
-                with col2:
-                    tiene = st.checkbox(checkbox_label, value=bool(en_coleccion), key=f"especiales_{numero}")
-
-            # Actualizar en la base de datos si se marca/desmarca
-            conn = sqlite3.connect("liga_hypermotion.db")
-            cursor = conn.cursor()
-            cursor.execute("UPDATE JUGADORES SET EN_COLECCION = ? WHERE NUMERO = ?", (int(tiene), numero))
-            conn.commit()
-            conn.close()
-
-    if st.button("🔙 Volver a equipos"):
-        del st.session_state["mostrar_especiales"]
-        st.rerun()
-
-# Definir qué página mostrar
-if "mostrar_especiales" in st.session_state:
-    pagina_especiales()
-elif "equipo_seleccionado" in st.session_state:
+# 📌 Lógica de navegación
+if "equipo_seleccionado" in st.session_state:
     pagina_jugadores(st.session_state["equipo_seleccionado"])
 else:
     pagina_principal()
