@@ -119,10 +119,11 @@ def mostrar_equipos():
     equipos = obtener_equipos()
 
     if not st.session_state["is_mobile"]:
-        # ✅ En PC → 4 columnas
+        # ✅ En PC → 4 columnas con el orden correcto
         cols = st.columns(4)
         for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
-            with cols[idx % 4]:
+            col_idx = idx % 4  # Mantener el orden de izquierda a derecha
+            with cols[col_idx]:
                 if url_escudo:
                     st.image(url_escudo, caption=nombre, use_container_width=True)
                 if st.button(f"🔍 Ver {nombre}", key=nombre):
@@ -130,15 +131,20 @@ def mostrar_equipos():
                     st.session_state["mostrar_todos"] = True
                     st.rerun()
     else:
-        # ✅ En móvil → 1 sola columna
-        for id_equipo, nombre, url_escudo in equipos:
-            if url_escudo:
-                st.image(url_escudo, caption=nombre, use_container_width=True)
-            if st.button(f"🔍 Ver {nombre}", key=nombre):
-                st.session_state["equipo_seleccionado"] = nombre
-                st.session_state["mostrar_todos"] = True
-                st.rerun()
+        # ✅ En móvil → 2 columnas en lugar de 1 para mantener la estructura
+        cols = st.columns(2)
+        for idx, (id_equipo, nombre, url_escudo) in enumerate(equipos):
+            col_idx = idx % 2  # Organizar en dos columnas en móviles
+            with cols[col_idx]:
+                if url_escudo:
+                    st.image(url_escudo, caption=nombre, use_container_width=True)
+                if st.button(f"🔍 Ver {nombre}", key=nombre):
+                    st.session_state["equipo_seleccionado"] = nombre
+                    st.session_state["mostrar_todos"] = True
+                    st.rerun()
 
+# Llamar a la función en la página principal
+# mostrar_equipos()
 # 📌 Página principal
 def pagina_principal():
     st.image("https://assets.laliga.com/assets/logos/LALIGA_HYPERMOTION_RGB_h_color/LALIGA_HYPERMOTION_RGB_h_color.png", caption="LALIGA HYPERMOTION", use_container_width=True)
