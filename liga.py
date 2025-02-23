@@ -7,20 +7,33 @@ LOGO_ESPECIALES = "ESPECIALES.jpg"  # Asegúrate de que este archivo está en el
 
 
 
-import streamlit as st
+
+
+# 📌 Capturar el User-Agent con JavaScript y enviarlo a Streamlit
+st.markdown("""
+<script>
+    function sendUserAgent() {
+        var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        window.parent.postMessage({"user_agent": userAgent}, "*");
+    }
+    window.onload = sendUserAgent;
+</script>
+""", unsafe_allow_html=True)
 
 def detectar_dispositivo():
-    """Detecta si el usuario está en un móvil usando el User-Agent y el ancho de pantalla."""
-    user_agent = st.experimental_user_agent  # Obtener el User-Agent del navegador
-    if user_agent and ("iPhone" in user_agent or "Android" in user_agent or "Mobile" in user_agent):
-        return True  # Si el User-Agent contiene "iPhone" o "Android", es móvil
-    
+    """Detecta si el usuario está en un móvil basándose en el User-Agent y el ancho de pantalla."""
+    if "user_agent" in st.session_state:
+        user_agent = st.session_state["user_agent"]
+        if any(x in user_agent for x in ["iPhone", "Android", "Mobile"]):
+            return True  # ✅ Si el User-Agent contiene "iPhone" o "Android", es un móvil
+
+    # 🔹 Si no se puede detectar el User-Agent, usamos el ancho de pantalla
     if "window_width" in st.session_state:
-        return st.session_state["window_width"] < 800  # Si el ancho es menor a 800px, es móvil
-    
+        return st.session_state["window_width"] < 800
+
     return False  # Por defecto, asumimos que es PC
 
-# Guardar el estado en session_state
+# 📌 Guardar si es móvil en session_state
 if "is_mobile" not in st.session_state:
     st.session_state["is_mobile"] = detectar_dispositivo()
 
