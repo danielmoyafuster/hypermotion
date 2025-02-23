@@ -24,6 +24,7 @@ if "is_mobile" not in st.session_state:
 
 # Capturar ancho de pantalla en cada ejecución (para refinar la detección)
 st.session_state["window_width"] = st.query_params().get("width", [1024])[0]
+
 def pagina_jugadores(equipo):
     st.title(f"👕 Jugadores de {equipo}")
 
