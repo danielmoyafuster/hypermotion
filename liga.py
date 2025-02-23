@@ -156,7 +156,7 @@ def pagina_principal():
     st.markdown("---")
     st.write("**Selecciona un equipo para ver su lista de jugadores**")
      
-    st.session_state["is_mobile"] = st.toggle("📱 Forzar modo móvil", value=st.session_state.get("is_mobile", False))
+    st.session_state["is_mobile"] = st.toggle(" Forzar modo móvil", value=st.session_state.get("is_mobile", False))
     mostrar_equipos()
 
 # 📌 Lógica de navegación
