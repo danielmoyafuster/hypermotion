@@ -179,6 +179,10 @@ def pagina_principal():
 
     st.markdown("---")
     st.write("**Selecciona un equipo para ver su lista de jugadores**")
+    # 📌 Mostrar información de depuración en la interfaz para verificar qué detecta Streamlit
+    st.write(f"📱 **¿Es móvil?:** {st.session_state['is_mobile']}")
+    st.write(f"🖥 **Ancho de ventana detectado:** {st.session_state.get('window_width', 'No detectado')}")
+    st.write(f"📊 **Número de equipos detectados:** {len(obtener_equipos())}")
     mostrar_equipos()
 
 # 📌 Lógica de navegación
