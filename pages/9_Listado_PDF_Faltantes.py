@@ -2,9 +2,25 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 from fpdf import FPDF
+# Título de la app
+# URL del logo de LaLiga Hypermotion
+logo_url = "https://assets.laliga.com/assets/logos/LALIGA_HYPERMOTION_RGB_h_color/LALIGA_HYPERMOTION_RGB_h_color.png"
+
+# Mostrar la imagen en Streamlit con el nuevo parámetro
+st.image(logo_url, caption="LALIGA HYPERMOTION", use_container_width=True)
+
+
 
 # Configurar la página para que sea más ancha
 st.set_page_config(layout="wide")  # ✅ Usa todo el ancho disponible en pantalla
+def estampas_que_faltan():
+    conn = sqlite3.connect("liga_hypermotion.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM JUGADORES WHERE EN_COLECCION = 0")
+    jugadores_faltan = cursor.fetchone()[0]  
+    conn.close()
+    return jugadores_faltan
+
 
 # Función para obtener las estampas faltantes en formato tabla con equipos y números en columnas
 def obtener_estampas_faltantes():
@@ -37,18 +53,20 @@ def obtener_estampas_faltantes():
 # Función para generar el PDF en el formato solicitado
 def generar_pdf():
     estampas_faltantes = obtener_estampas_faltantes()
+    numero_que_faltan = estampas_que_faltan()
 
     if estampas_faltantes.empty:
         st.warning("No hay estampas faltantes.")
         return
 
-    pdf = FPDF(orientation="L", unit="mm", format="A4")  # Formato apaisado
+    #pdf = FPDF(orientation="L", unit="mm", format="A4")  # Formato apaisado: Landscape
+    pdf = FPDF(orientation="P", unit="mm", format="A4")  # Formato apaisado: Portrait
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
     # Configurar la fuente
     pdf.set_font("Arial", "B", 14)
-    pdf.cell(280, 10, "Lista de Estampas Faltantes", ln=True, align="C")
+    pdf.cell(280, 10, f"Lista de Estampas Faltantes ({numero_que_faltan})", ln=True, align="C")
     pdf.ln(10)
 
     pdf.set_font("Arial", "B", 10)
